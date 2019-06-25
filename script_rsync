@@ -1,0 +1,91 @@
+#!/bin/bash
+
+i=$1
+src=$2
+user=$3
+ip=$4
+dest=$5
+
+transfert() {
+
+    if [ ! -z "$i" ] && [ ! -z "$src" ] && [ ! -z "$user" ] && [ ! -z "$ip" ] && [ ! -z "$dest" ] ; then
+        if [ "$i" == "O" ]; then
+            rsync -e ssh -avz --delete-after $src $user@$ip:$dest # lance le tranfert si les 5 parametres sont correctes, en supprimer tout les fichiers du dossier destination
+        else
+            rsync -e ssh -avz $src $user@$ip:$dest # lance le tranfert si les 5 parametres sont correctes, sans supprimer tout les fichiers
+        fi
+        exit
+    fi
+
+    echo "Vous n'avez pas rentré tout les parametres, voulez vous continer O / N ?"
+    read ok
+
+    if [ "$ok" != "O" ] && [ "$ok" != "o" ]; then
+        exit
+    fi
+
+    echo "Voulez vous restaurer le dossier destination O / N ?"
+    read i
+
+    echo "Veuillez saisir votre dossier source"
+    read src
+
+    echo "Veuillez saisir votre user ssh"
+    read user
+
+    echo "Veuillez saisir votre ip ssh"
+    read ip
+
+    echo "Veuillez saisir votre dossier destinaiton"
+    read dest
+
+    if [ ! -z "$i" ] && [ ! -z "$src" ] && [ ! -z "$user" ] && [ ! -z "$ip" ] && [ ! -z "$dest" ] ; then
+        if [ "$i" == "O" ] || [ "$check" == "o" ]; then
+            rsync -e ssh -avz --delete-after $src $user@$ip:$dest # cette ligne lance le transfert avec les paremetres rentré avant a l'utilisateur, et supprime les fichier du dossier dest
+        else
+            rsync -e ssh -avz $src $user@$ip:$dest # cette ligne lance le transfert avec les paremetres rentré avant a l'utilisateur, sans supprimé les fichiers
+        fi
+
+    else
+        echo "Vous n'avez pas rentré toutes les valeurs.. Voulez vous continuer avec la commande de base ? O / N"
+        read check
+
+        if [ "$check" == "O" ] || [ "$check" == "o" ]; then
+        	rsync -e ssh -avz /home/source user@ip_du_serveur:/dossier/destination/ # lance le transfert d'example avec les parametres de base
+        else
+            exit
+        fi
+    fi
+
+}
+
+#LANCEMENT DU SCRIPT
+
+show_usage() {
+
+    echo "Utilisation de la commande :"
+    echo ""
+    echo "Remarque: Il vaut mieux utiliser des chemins relatifs."
+    echo ""
+    echo "        ./script  <1> <2> <3> <4> <5>"
+    echo ""
+	echo "1: Check delete dossier destination --delete-after O = oui 1 = non"
+	echo "2: Dossier source"
+	echo "3: Nom user SSH"
+    echo "4: IP SSH"
+    echo "5: Dossier destination"
+	echo ""
+    echo "Vous pouvez aussi rentrer les valeurs apres avec la commande sans parametres * ./script * "
+}
+
+#LANCEMENT DU SCRIPT
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+
+    show_usage
+
+else
+	#PRESETS
+	
+    transfert
+fi
