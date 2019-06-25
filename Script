@@ -1,16 +1,40 @@
 #!/bin/bash
-PROJECT_FOLDER=$1
-SAVE_FOLDER_PATH=$2
-TOMORROW=$(date --date="tomorrow" '+%A')
+FTP_IP=$1
+FTP_USERNAME=$2
+FTP_USERPASSWORD=$3
+FTP_DIR=$4
+PROJECT_FOLDER=$5
+SAVE_FOLDER_PATH=$6
+echo $PROJECT_FOLDER
+echo $SAVE_FOLDER_PATH
+
+ftp() {
+	
+	sudo apt-get install lftp
+
+	lftp -u $FTP_USERNAME,$FTP_USERPASSWORD $FTP_IP <<-EOT
+	cd $FTP_DIR
+	mirror -c -n --parallel=10 $FTP_DIR $SAVE_FOLDER_PATH
+	EOT
+
+}
 
 full_save() {
+
+	ftp
+
+	echo "full save"
 	
-	LATEST_BACKUP="$SAVE_FOLDER_PATH+backup_project_`date "+%d.%m.%Y_%H.%M.%S"`.tar.gz"
-	tar -czpf $LATEST_BACKUP $PROJECT_FOLDER
+	LATEST_BACKUP="$PROJECT_FOLDER+backup_wordpress_`date "+%d.%m.%Y_%H.%M.%S"`.tar.gz"
+	tar -czpf $LATEST_BACKUP $SAVE_FOLDER_PATH
 
 }
 
 partial_save() {
+
+	ftp
+
+	echo "partial save"
 
 	TEST_BACKUP_FOLDER=$SAVE_FOLDER_PATH+test
 
@@ -38,11 +62,15 @@ show_usage() {
 
     echo "Utilisation de la commande :"
     echo ""
-    echo "        ./sauvegarde-automatique <1> <2>"
+    echo "        ./sauvegarde-automatique <1> <2> <3> <4> <5>"
     echo ""
-    echo "1:Fichier à sauvegarder"
-    echo "2:Fichier dans lequel effectuer la sauvegarde"
+	echo "1: IP du serveur ftp"
+	echo "2: Nom d'utilisateur du ftp"
+	echo "3: Mot de passe du ftp"
+    echo "4: Fichier à sauvegarder"
+    echo "5: Fichier dans lequel effectuer la sauvegarde"
     echo "Remarque: Il vaut mieux utiliser des chemins relatifs."
+	echo ""
 
 }
 
@@ -56,11 +84,13 @@ else
 	#PRESETS
 	
 	if [ ! -d $PROJECT_FOLDER ]; then
-	echo "Le dossier à sauvegardé spécifié n'existe pas !"
+		echo "Le dossier à sauvegardé spécifié n'existe pas !"
 	fi
 
 	if [ -d $SAVE_FOLDER_PATH ]; then
 		echo "Fichier de sauvegarde enregistré !"
+		echo "Une sauvegarde à été effectuée, vous pouvez maintenant laisser le script tourner en arrière plan pour effectuer les tâches de sauvegardes automatiques."
+		full_save
 	else
 
 		echo "Le fichier n'existe pas. Voulez-vous le créer ? (o/n)"
@@ -82,19 +112,23 @@ else
 
 	while [ true ]
 	do
-		sleep 1800
+		
+		
+		
+		sleep 21600
 
-		NOW=$(date '+%A')
+		hours=$((hours+6))
+		echo "$hours"
 
-		if [ $NOW = $TOMORROW ] ; then
+		if test hours = 72 ; then
 
-			if [ $NOW = "vendredi" ] ; then
-				full_save
-				TOMORROW=$(date --date="tomorrow" '+%A')
-			else
-				partial_save
-				TOMORROW=$(date --date="tomorrow" '+%A')
-			fi
+			full_save
+			hours=0
+
+		else 
+			
+			partial_save
+
 		fi
 
 	done
